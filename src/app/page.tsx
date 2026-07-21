@@ -5,6 +5,8 @@ import { CartBadge } from "@/components/cart-badge"
 import { placeholderImage } from "@/lib/product-image";
 import Link from "next/link";
 import Image from "next/image";
+// import LogoutButton from "@/components/logout-button";
+import SiteNav from "@/components/site-nav";
 
 
 export default async function HomePage() {
@@ -19,33 +21,14 @@ export default async function HomePage() {
     <div className="max-w-5xl mx-auto px-6 py-8">
       <header className="mb-10 border-b border-black pb-6 flex items-center justify-between">
         <Logo />
-        <nav className="text-sm flex items-center gap-6">
-          {categories.map((c) => (
-            <a key={c.id} href={`#${c.slug}`} className="hidden sm:inline hover:underline text-neutral-500">
-              {c.name}
-            </a>
-          ))}
-                {session?.user && (
-        <Link href="/orders" className="hover:underline text-neutral-500">
-          Your orders
-        </Link>
-      )}
-          <CartBadge />
-          {session?.user ? (
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/" });
-              }}
-            >
-              <button className="hover:underline">Log out</button>
-            </form>
-          ) : (
-            <Link href="/login" className="hover:underline">
-              Log in
-            </Link>
-          )}
-        </nav>
+        <SiteNav
+          categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
+          userEmail={session?.user?.email}
+          logoutAction={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        />
       </header>
 
       <section className="mb-16 py-16 border-b border-black grid sm:grid-cols-2 gap-8 items-end">

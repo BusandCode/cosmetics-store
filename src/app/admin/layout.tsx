@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { auth, signOut } from "@/lib/auth";
+import LogoutButton from "@/components/logout-button";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <header className="mb-10 border-b border-black pb-6 flex items-baseline justify-between">
@@ -12,7 +16,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/products" className="hover:underline">Products</Link>
           </nav>
         </div>
-        <Link href="/" className="text-sm hover:underline text-neutral-500">← Store</Link>
+        <div className="flex items-center gap-4 text-sm">
+          {session?.user?.email && (
+            <span className="text-neutral-400 text-xs">{session.user.email}</span>
+          )}
+          <LogoutButton
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
+          />
+          <Link href="/" className="hover:underline text-neutral-500">← Store</Link>
+        </div>
       </header>
       {children}
     </div>
