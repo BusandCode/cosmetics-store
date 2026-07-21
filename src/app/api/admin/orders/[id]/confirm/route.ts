@@ -4,17 +4,19 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const order = await prisma.order.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { payment: true },
   });
   if (order && order.payment && order.status !== "PAID") {
     await prisma.$transaction([
-      prisma.order.update({ where: { id: params.id }, data: { status: "PAID" } }),
+      prisma.order.update({ where: { id }, data: { status: "PAID" } }),
       prisma.payment.update({
-        where: { orderId: params.id },
+        where: { orderId: id },
         data: { status: "CONFIRMED", confirmedAt: new Date() },
       }),
     ]);
