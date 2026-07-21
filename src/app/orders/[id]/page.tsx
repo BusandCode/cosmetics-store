@@ -4,7 +4,8 @@ import { OrderTracker } from "@/components/order-tracker";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-export default async function OrderPage({ params }: { params: { id: string } }) {
+export default async function OrderPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const order = await prisma.order.findUnique({
     where: { id: params.id },
     include: { items: { include: { variant: { include: { product: true } } } } },

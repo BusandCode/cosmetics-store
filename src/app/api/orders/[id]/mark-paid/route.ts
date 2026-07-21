@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 // Customer-facing: "I've made the transfer." This never sets status to PAID —
 // only an admin confirming against their bank alert can do that.
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const order = await prisma.order.findUnique({ where: { id: params.id } });
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });

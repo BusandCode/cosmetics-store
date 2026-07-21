@@ -7,7 +7,8 @@ const NEXT_STATUS: Record<string, string> = {
   SHIPPED: "DELIVERED",
 };
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const order = await prisma.order.findUnique({ where: { id: params.id } });
   const next = order ? NEXT_STATUS[order.status] : undefined;
 
