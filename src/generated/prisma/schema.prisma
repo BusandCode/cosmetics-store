@@ -73,6 +73,7 @@ model Product {
   category    Category         @relation(fields: [categoryId], references: [id])
   categoryId  String
   variants    ProductVariant[]
+  reviews     Review[]
   active      Boolean          @default(true)
   createdAt   DateTime         @default(now())
 }
@@ -124,4 +125,14 @@ model Payment {
   confirmedById String? // admin user id, for manual confirmations
   confirmedAt   DateTime?
   createdAt     DateTime      @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  name      String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
 }

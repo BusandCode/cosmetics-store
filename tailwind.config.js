@@ -12,6 +12,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["var(--font-manrope)", "sans-serif"],
+        serif: ["var(--font-fraunces)"],
       },
       colors: {
         ink: "#000000",

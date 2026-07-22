@@ -197,6 +197,15 @@ exports.Prisma.PaymentScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ReviewScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  name: 'name',
+  rating: 'rating',
+  comment: 'comment',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -245,7 +254,8 @@ exports.Prisma.ModelName = {
   ProductVariant: 'ProductVariant',
   Order: 'Order',
   OrderItem: 'OrderItem',
-  Payment: 'Payment'
+  Payment: 'Payment',
+  Review: 'Review'
 };
 
 /**

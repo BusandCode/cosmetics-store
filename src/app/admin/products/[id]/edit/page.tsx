@@ -1,16 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { ProductForm } from "@/components/admin/product-form";
 import { notFound } from "next/navigation";
-import ProductForm from "@/components/admin/product-form";
+import Link from "next/link";
 
-export default async function EditProductPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
+export default async function EditProductPage({ params }: { params: { id: string } }) {
   const [product, categories] = await Promise.all([
-    prisma.product.findUnique({ where: { id }, include: { variants: true } }),
+    prisma.product.findUnique({ where: { id: params.id }, include: { variants: true } }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
   ]);
 
@@ -18,7 +13,8 @@ export default async function EditProductPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight mb-8">Edit product</h1>
+      <Link href="/admin/products" className="text-sm hover:underline">← Products</Link>
+      <h1 className="text-2xl font-bold tracking-tight mt-4 mb-8">Edit {product.name}</h1>
       <ProductForm
         mode="edit"
         productId={product.id}
@@ -28,7 +24,7 @@ export default async function EditProductPage({
           description: product.description,
           categoryId: product.categoryId,
           images: product.images,
-          variants: product.variants,
+          variants: product.variants.map((v) => ({ id: v.id, label: v.label, sku: v.sku, priceKobo: v.priceKobo, stock: v.stock })),
         }}
       />
     </div>

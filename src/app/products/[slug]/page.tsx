@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { ProductDetail } from "./product-detail";
+import ProductDetail from "./product-detail";
 
 export default async function ProductPage(
   props: {
@@ -10,7 +10,11 @@ export default async function ProductPage(
   const params = await props.params;
   const product = await prisma.product.findUnique({
     where: { slug: params.slug },
-    include: { variants: true, category: true },
+    include: {
+      category: true,
+      variants: true,
+      reviews: { orderBy: { createdAt: "desc" } },
+    },
   });
   if (!product || !product.active) notFound();
 

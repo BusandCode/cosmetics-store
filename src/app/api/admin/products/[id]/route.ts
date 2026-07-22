@@ -1,68 +1,60 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { z } from "zod";
 
-export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+const bodySchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  categoryId: z.string(),
+  images: z.array(z.string()).default([]),
+  variants: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        label: z.string().min(1),
+        sku: z.string().min(1),
+        priceKobo: z.number().int().positive(),
+        stock: z.number().int().min(0),
+      })
+    )
+    .min(1),
+});
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const session = await auth();
   if ((session?.user as any)?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const body = await req.json();
-
-  // Toggle active only
-  if (typeof body.active === "boolean" && Object.keys(body).length === 1) {
-    await prisma.product.update({ where: { id: params.id }, data: { active: body.active } });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, description, categoryId, images, variants } = body as {
-    name: string;
-    description: string;
-    categoryId: string;
-    images: string[];
-    variants: { id?: string; label: string; sku: string; priceKobo: number; stock: number }[];
-  };
+  const parsed = bodySchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid product data", details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { name, description, categoryId, images, variants } = parsed.data;
 
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.product.update({
-        where: { id: params.id },
-        data: { name, description, categoryId, images: images.filter(Boolean) },
-      });
-
-      const existingVariants = await tx.productVariant.findMany({ where: { productId: params.id } });
-      const keptIds = variants.filter((v) => v.id).map((v) => v.id!);
-
-      // Remove variants dropped from the form, but never ones with order history
-      const toRemove = existingVariants.filter((ev) => !keptIds.includes(ev.id));
-      for (const v of toRemove) {
-        const orderItemCount = await tx.orderItem.count({ where: { variantId: v.id } });
-        if (orderItemCount === 0) {
-          await tx.productVariant.delete({ where: { id: v.id } });
-        }
-        // if it has order history, silently keep it rather than fail the whole save
-      }
-
-      for (const v of variants) {
-        if (v.id) {
-          await tx.productVariant.update({
-            where: { id: v.id },
-            data: { label: v.label, sku: v.sku, priceKobo: v.priceKobo, stock: v.stock },
-          });
-        } else {
-          await tx.productVariant.create({
-            data: { productId: params.id, label: v.label, sku: v.sku, priceKobo: v.priceKobo, stock: v.stock },
-          });
-        }
-      }
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id: params.id },
+      data: { name, description, categoryId, images },
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    if (err.code === "P2002") {
-      return NextResponse.json({ error: "A variant SKU is already in use" }, { status: 409 });
+    for (const variant of variants) {
+      if (variant.id) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: { label: variant.label, sku: variant.sku, priceKobo: variant.priceKobo, stock: variant.stock },
+        });
+      } else {
+        await tx.productVariant.create({
+          data: { ...variant, productId: params.id },
+        });
+      }
     }
-    return NextResponse.json({ error: "Failed to save product" }, { status: 500 });
-  }
+  });
+
+  return NextResponse.json({ ok: true });
 }
