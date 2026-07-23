@@ -200,7 +200,7 @@ exports.Prisma.PaymentScalarFieldEnum = {
 exports.Prisma.ReviewScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
-  name: 'name',
+  userId: 'userId',
   rating: 'rating',
   comment: 'comment',
   createdAt: 'createdAt'

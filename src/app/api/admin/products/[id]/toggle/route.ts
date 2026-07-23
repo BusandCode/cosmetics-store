@@ -4,20 +4,21 @@ import { auth } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await auth();
   if ((session?.user as any)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const product = await prisma.product.findUnique({ where: { id: params.id } });
+  const product = await prisma.product.findUnique({ where: { id } });
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
   await prisma.product.update({
-    where: { id: params.id },
+    where: { id },
     data: { active: !product.active },
   });
 

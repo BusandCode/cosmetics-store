@@ -23,8 +23,9 @@ const bodySchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await auth();
   if ((session?.user as any)?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,7 +39,7 @@ export async function POST(
 
   await prisma.$transaction(async (tx) => {
     await tx.product.update({
-      where: { id: params.id },
+      where: { id },
       data: { name, description, categoryId, images },
     });
 
@@ -50,7 +51,7 @@ export async function POST(
         });
       } else {
         await tx.productVariant.create({
-          data: { ...variant, productId: params.id },
+          data: { ...variant, productId: id },
         });
       }
     }

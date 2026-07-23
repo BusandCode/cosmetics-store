@@ -8,26 +8,24 @@ export async function logoutAction() {
 }
 
 export async function loginAction(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  let signInError = false;
   try {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    await signIn("credentials", { email, password, redirect: false });
+  } catch {
+    signInError = true;
+  }
 
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false, // Don't redirect automatically
-    });
-
-    // Get the session after successful login
-    const session = await auth();
-    
-    // Check if user is admin
-    if (session?.user?.role === "admin") {
-      redirect("/admin");
-    } else {
-      redirect("/");
-    }
-  } catch (error) {
+  if (signInError) {
     return { error: "Invalid email or password" };
+  }
+
+  const session = await auth();
+  if (session?.user?.role === "ADMIN") {
+    redirect("/admin");
+  } else {
+    redirect("/");
   }
 }

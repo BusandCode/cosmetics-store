@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-// import { requireAdmin } from "@/lib/auth"; // wire up once role check is added
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
   const order = await prisma.order.findUnique({
     where: { id },
     include: { payment: true },
